@@ -27,36 +27,12 @@ function Get-TargetResource
         $PayloadFileName,
 
         [Parameter()]
-        [System.Byte[]]
-        $Payload,
-
-        [Parameter()]
         [System.String]
-        $Expiration,
+        $Payload,
 
         [Parameter()]
         [System.String[]]
         $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.String]
-        $Version,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $DeviceStatuses
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $GroupAssignments
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $UserStatuses
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Categories,
 
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
@@ -118,24 +94,22 @@ function Get-TargetResource
     try
     {
         $instance = Get-MgBetaDeviceAppManagementMobileApp -MobileAppId $Id `
-            -ExpandProperty "categories" `
             -ErrorAction SilentlyContinue
 
         if ($null -eq $instance)
         {
-            Write-Verbose -Message "Could not find an Intune Windows Office Suite App with Id {$Id}."
+            Write-Verbose -Message "Could not find an iOS Lob App Provisioning Configuration with Id {$Id}."
 
             if (-not [System.String]::IsNullOrEmpty($DisplayName))
             {
                 $instance = Get-MgBetaDeviceAppManagementMobileApp `
-                    -Filter "(isof('microsoft.graph.officeSuiteApp') and displayName eq '$DisplayName')" `
+                    -Filter "(isof('microsoft.graph.iosLobAppProvisioningConfigurations') and displayName eq '$DisplayName')" `
                     -ErrorAction SilentlyContinue
             }
 
             if ($null -ne $instance)
             {
                 $instance = Get-MgBetaDeviceAppManagementMobileApp -MobileAppId $instance.Id `
-                    -ExpandProperty "categories" `
                     -ErrorAction SilentlyContinue
                 $Id = $instance.Id
             }
@@ -143,61 +117,20 @@ function Get-TargetResource
 
         if ($null -eq $instance)
         {
-            Write-Verbose -Message "Could not find an Intune Windows Office Suite App with DisplayName {$DisplayName} was found."
+            Write-Verbose -Message "Could not find an Intune iOS Lob App Provisioning Configuration with DisplayName {$DisplayName} was found."
             return $nullResult
         }
 
-        Write-Verbose "An Intune Windows Office Suite App with Id {$Id} and DisplayName {$DisplayName} was found."
-
-        #region complex types
-        $complexCategories = @()
-        foreach ($category in $instance.Categories)
-        {
-            $myCategory = @{}
-            $myCategory.Add('Id', $category.id)
-            $myCategory.Add('DisplayName', $category.displayName)
-            $complexCategories += $myCategory
-        }
-
-        $complexExcludedApps = @{}
-        if ($null -ne $instance.AdditionalProperties.excludedApps)
-        {
-            $instance.AdditionalProperties.excludedApps.GetEnumerator() | Foreach-Object {
-                $complexExcludedApps.Add($_.Key, $_.Value)
-            }
-        }
-
-        # $complexLargeIcon = @{}
-        # if ($null -ne $instance.LargeIcon.Value)
-        # {
-        #     $complexLargeIcon.Add('Value', [System.Convert]::ToBase64String($instance.LargeIcon.Value))
-        #     $complexLargeIcon.Add('Type', $instance.LargeIcon.Type)
-        # }
+        Write-Verbose "An Intune iOS Lob App Provisioning Configuration with Id {$Id} and DisplayName {$DisplayName} was found."
 
         $results = @{
             Id                              = $instance.Id
             DisplayName                     = $instance.DisplayName
             Description                     = $instance.Description
-            IsFeatured                      = $instance.IsFeatured
-            PrivacyInformationUrl           = $instance.PrivacyInformationUrl
-            InformationUrl                  = $instance.InformationUrl
-            Notes                           = $instance.Notes
+            ExpirationDateTime              = $instance.ExpirationDateTime
+            PayloadFileName                 = $instance.PayloadFileName
+            Payload                         = $instance.Payload
             RoleScopeTagIds                 = $instance.RoleScopeTagIds
-            AutoAcceptEula                  = $instance.AdditionalProperties.autoAcceptEula
-            ProductIds                      = $instance.AdditionalProperties.productIds
-            UseSharedComputerActivation     = $instance.AdditionalProperties.useSharedComputerActivation
-            UpdateChannel                   = $instance.AdditionalProperties.updateChannel
-            OfficeSuiteAppDefaultFileFormat = $instance.AdditionalProperties.officeSuiteAppDefaultFileFormat
-            OfficePlatformArchitecture      = $instance.AdditionalProperties.officePlatformArchitecture
-            LocalesToInstall                = $instance.AdditionalProperties.localesToInstall
-            InstallProgressDisplayLevel     = $instance.AdditionalProperties.installProgressDisplayLevel
-            ShouldUninstallOlderVersionsOfOffice = $instance.AdditionalProperties.shouldUninstallOlderVersionsOfOffice
-            TargetVersion                   = $instance.AdditionalProperties.targetVersion
-            UpdateVersion                   = $instance.AdditionalProperties.updateVersion
-            OfficeConfigurationXml          = $instance.AdditionalProperties.officeConfigurationXml
-            # LargeIcon                       = $complexLargeIcon
-            ExcludedApps                    = $complexExcludedApps
-            Categories                      = $complexCategories
             Ensure                          = 'Present'
             Credential                      = $Credential
             ApplicationId                   = $ApplicationId
@@ -245,7 +178,7 @@ function Get-TargetResource
 function Set-TargetResource
 {
     [CmdletBinding()]
-     param
+    param
     (
         #region Intune resource parameters
 
@@ -262,93 +195,24 @@ function Set-TargetResource
         $Description,
 
         [Parameter()]
-        [System.Boolean]
-        $IsFeatured,
+        [System.String]
+        $ExpirationDateTime,
 
         [Parameter()]
         [System.String]
-        $PrivacyInformationUrl,
+        $PayloadFileName,
 
         [Parameter()]
         [System.String]
-        $InformationUrl,
-
-        [Parameter()]
-        [System.String]
-        $Notes,
+        $Payload,
 
         [Parameter()]
         [System.String[]]
         $RoleScopeTagIds,
 
         [Parameter()]
-        [System.Boolean]
-        $AutoAcceptEula,
-
-        [Parameter()]
-        [System.String[]]
-        [ValidateSet('O365ProPlusRetail', 'O365BusinessRetail', 'VisioProRetail', 'ProjectProRetail')]
-        $ProductIds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExcludedApps,
-
-        [Parameter()]
-        [System.Boolean]
-        $UseSharedComputerActivation,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('None', 'Current', 'Deferred', 'FirstReleaseCurrent', 'FirstReleaseDeferred', 'MonthlyEnterprise')]
-        $UpdateChannel,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('NotConfigured', 'OfficeOpenXMLFormat', 'OfficeOpenDocumentFormat', 'UnknownFutureValue')]
-        $OfficeSuiteAppDefaultFileFormat,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('None', 'X86', 'X64', 'Arm', 'Neutral', 'Arm64')]
-        $OfficePlatformArchitecture,
-
-        [Parameter()]
-        [System.String[]]
-        $LocalesToInstall,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('None', 'Full')]
-        $InstallProgressDisplayLevel,
-
-        [Parameter()]
-        [System.Boolean]
-        $ShouldUninstallOlderVersionsOfOffice,
-
-        [Parameter()]
-        [System.String]
-        $TargetVersion,
-
-        [Parameter()]
-        [System.String]
-        $UpdateVersion,
-
-        [Parameter()]
-        [System.Byte[]]
-        $OfficeConfigurationXml,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance[]]
-        $Categories,
-
-        [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
         $Assignments,
-
-        # [Parameter()]
-        # [Microsoft.Management.Infrastructure.CimInstance]
-        # $LargeIcon,
 
         #endregion
 
@@ -403,16 +267,12 @@ function Set-TargetResource
 
     if ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Absent')
     {
-        Write-Verbose -Message "Creating an Intune Windows Office Suite App with DisplayName {$DisplayName}"
+        Write-Verbose -Message "Creating an Intune iOS Lob App Provisioning Configuration with DisplayName {$DisplayName}"
         $BoundParameters.Remove('Assignments') | Out-Null
 
         $CreateParameters = ([Hashtable]$BoundParameters).Clone()
         $CreateParameters = Rename-M365DSCCimInstanceParameter -Properties $CreateParameters
         $CreateParameters.Remove('Id') | Out-Null
-        $CreateParameters.Remove('Categories') | Out-Null
-        $CreateParameters.Add('Publisher', 'Microsoft')
-        $CreateParameters.Add('Developer', 'Microsoft')
-        $CreateParameters.Add('Owner', 'Microsoft')
 
         foreach ($key in ($CreateParameters.Clone()).Keys)
         {
@@ -422,7 +282,7 @@ function Set-TargetResource
             }
         }
 
-        $CreateParameters.Add('@odata.type', '#microsoft.graph.officeSuiteApp')
+        $CreateParameters.Add('@odata.type', '#microsoft.graph.iosLobAppProvisioningConfigurations')
         $app = New-MgBetaDeviceAppManagementMobileApp -BodyParameter $CreateParameters
 
         foreach ($category in $Categories)
@@ -456,14 +316,12 @@ function Set-TargetResource
     }
     elseif ($Ensure -eq 'Present' -and $currentInstance.Ensure -eq 'Present')
     {
-        Write-Host "Updating the Intune Windows Office Suite App with DisplayName {$DisplayName}"
+        Write-Host "Updating the Intune iOS Lob App Provisioning Configuration with DisplayName {$DisplayName}"
         $BoundParameters.Remove('Assignments') | Out-Null
 
         $UpdateParameters = ([Hashtable]$BoundParameters).Clone()
         $UpdateParameters = Rename-M365DSCCimInstanceParameter -Properties $UpdateParameters
         $UpdateParameters.Remove('Id') | Out-Null
-        $UpdateParameters.Remove('Categories') | Out-Null
-        $UpdateParameters.Remove('OfficePlatformArchitecture') | Out-Null
 
         foreach ($key in ($UpdateParameters.Clone()).Keys)
         {
@@ -473,7 +331,7 @@ function Set-TargetResource
             }
         }
 
-        $UpdateParameters.Add('@odata.type', '#microsoft.graph.officeSuiteApp')
+        $UpdateParameters.Add('@odata.type', '#microsoft.graph.iosLobAppProvisioningConfigurations')
         Update-MgBetaDeviceAppManagementMobileApp -MobileAppId $currentInstance.Id -BodyParameter $UpdateParameters
 
         [array]$referenceObject = if ($null -ne $currentInstance.Categories.DisplayName) { $currentInstance.Categories.DisplayName } else { ,@() }
@@ -516,7 +374,7 @@ function Set-TargetResource
     }
     elseif ($Ensure -eq 'Absent' -and $currentInstance.Ensure -eq 'Present')
     {
-        Write-Host "Remove the Intune Windows Office Suite App with Id {$($currentInstance.Id)}"
+        Write-Host "Remove the Intune iOS Provisioning Configuration with Id {$($currentInstance.Id)}"
         Remove-MgBetaDeviceAppManagementMobileApp -MobileAppId $currentInstance.Id -Confirm:$false
     }
 }
@@ -525,7 +383,7 @@ function Test-TargetResource
 {
     [CmdletBinding()]
     [OutputType([System.Boolean])]
-     param
+    param
     (
         #region Intune resource parameters
 
@@ -542,81 +400,20 @@ function Test-TargetResource
         $Description,
 
         [Parameter()]
-        [System.Boolean]
-        $IsFeatured,
+        [System.String]
+        $ExpirationDateTime,
 
         [Parameter()]
         [System.String]
-        $PrivacyInformationUrl,
+        $PayloadFileName,
 
         [Parameter()]
         [System.String]
-        $InformationUrl,
-
-        [Parameter()]
-        [System.String]
-        $Notes,
+        $Payload,
 
         [Parameter()]
         [System.String[]]
         $RoleScopeTagIds,
-
-        [Parameter()]
-        [System.Boolean]
-        $AutoAcceptEula,
-
-        [Parameter()]
-        [System.String[]]
-        [ValidateSet('O365ProPlusRetail', 'O365BusinessRetail', 'VisioProRetail', 'ProjectProRetail')]
-        $ProductIds,
-
-        [Parameter()]
-        [Microsoft.Management.Infrastructure.CimInstance]
-        $ExcludedApps,
-
-        [Parameter()]
-        [System.Boolean]
-        $UseSharedComputerActivation,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('None', 'Current', 'Deferred', 'FirstReleaseCurrent', 'FirstReleaseDeferred', 'MonthlyEnterprise')]
-        $UpdateChannel,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('NotConfigured', 'OfficeOpenXMLFormat', 'OfficeOpenDocumentFormat', 'UnknownFutureValue')]
-        $OfficeSuiteAppDefaultFileFormat,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('None', 'X86', 'X64', 'Arm', 'Neutral', 'Arm64')]
-        $OfficePlatformArchitecture,
-
-        [Parameter()]
-        [System.String[]]
-        $LocalesToInstall,
-
-        [Parameter()]
-        [System.String]
-        [ValidateSet('None', 'Full')]
-        $InstallProgressDisplayLevel,
-
-        [Parameter()]
-        [System.Boolean]
-        $ShouldUninstallOlderVersionsOfOffice,
-
-        [Parameter()]
-        [System.String]
-        $TargetVersion,
-
-        [Parameter()]
-        [System.String]
-        $UpdateVersion,
-
-        [Parameter()]
-        [System.Byte[]]
-        $OfficeConfigurationXml,
 
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
@@ -625,10 +422,6 @@ function Test-TargetResource
         [Parameter()]
         [Microsoft.Management.Infrastructure.CimInstance[]]
         $Assignments,
-
-        # [Parameter()]
-        # [Microsoft.Management.Infrastructure.CimInstance]
-        # $LargeIcon,
 
         #endregion
 
@@ -665,6 +458,7 @@ function Test-TargetResource
         [System.String[]]
         $AccessTokens
     )
+
 
     #Ensure the proper dependencies are installed in the current environment.
     Confirm-M365DSCDependencies
@@ -709,11 +503,6 @@ function Test-TargetResource
             $ValuesToCheck.Remove($key) | Out-Null
         }
     }
-
-    # Prevent screen from filling up with the LargeIcon value
-    # Comparison will already be done because it's a CimInstance
-    # $CurrentValues.Remove('LargeIcon') | Out-Null
-    # $PSBoundParameters.Remove('LargeIcon') | Out-Null
 
     $ValuesToCheck.Remove('Id') | Out-Null
     $ValuesToCheck.Remove('OfficePlatformArchitecture') | Out-Null # Cannot be changed after creation
@@ -793,7 +582,7 @@ function Export-TargetResource
     {
         $Script:ExportMode = $true
         [array] $Script:getInstances = Get-MgBetaDeviceAppManagementMobileApp `
-            -Filter "isof('microsoft.graph.officeSuiteApp')" `
+            -Filter "isof('microsoft.graph.iosLobAppProvisioningConfigurations')" `
             -ErrorAction Stop
 
         $i = 1
@@ -867,22 +656,6 @@ function Export-TargetResource
                 }
             }
 
-            # if ($null -ne $Results.LargeIcon)
-            # {
-            #     $complexTypeStringResult = Get-M365DSCDRGComplexTypeToString `
-            #         -ComplexObject $Results.LargeIcon `
-            #         -CIMInstanceName 'DeviceManagementMimeContent'
-
-            #     if (-not [System.String]::IsNullOrWhiteSpace($complexTypeStringResult))
-            #     {
-            #         $Results.LargeIcon = $complexTypeStringResult
-            #     }
-            #     else
-            #     {
-            #         $Results.Remove('LargeIcon') | Out-Null
-            #     }
-            # }
-
             if ($null -ne $Results.Assignments)
             {
                 if ($Results.Assignments)
@@ -919,11 +692,6 @@ function Export-TargetResource
             {
                 $currentDSCBlock = Convert-DSCStringParamToVariable -DSCBlock $currentDSCBlock -ParameterName 'ExcludedApps' -IsCIMArray:$false
             }
-
-            # if ($null -ne $Results.LargeIcon)
-            # {
-            #     $currentDSCBlock = Convert-DSCStringParamToVariable -DSCBlock $currentDSCBlock -ParameterName 'LargeIcon' -IsCIMArray:$false
-            # }
 
             if ($null -ne $Results.Assignments)
             {
